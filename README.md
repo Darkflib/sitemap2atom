@@ -2,6 +2,10 @@
 
 A simple tool to convert a sitemap.xml file into an Atom feed - especially useful for sites that don't have a CMS or where the CMS doesn't support Atom feeds.
 
+## Example
+
+https://gist.github.com/Darkflib/989b8f3a5a1ea995e8e294669d5e282a
+
 ## Usage
 
 1. Install the required packages:
