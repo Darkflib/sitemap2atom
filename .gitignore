@@ -1,1 +1,18 @@
 enriched_feed.atom
+
+# code-cataloguing
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+*.pickle
+*credentials*.json
+_credentials_*
+*tokenizer*.json
+*.keystore
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc

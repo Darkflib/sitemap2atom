@@ -1,0 +1,37 @@
+{
+  "name": "vegvisir-python",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12", // or Debian-based variant
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/devcontainers/features/pipx:1": {}
+  },
+  "postCreateCommand": "pipx install uv && uv venv && uv pip install -r requirements.txt || true",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": ".venv/bin/python",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-python.python",
+        "esbenp.prettier-vscode",
+        "bierner.markdown-preview-github-styles",
+        "humao.rest-client"
+      ]
+    }
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
+  ],
+  "remoteUser": "vscode"
+}
+// Note: The `postCreateCommand` installs `uv` and sets up a virtual environment.
+// The `uv` command is used to manage the virtual environment and install dependencies.
+// The `|| true` at the end allows the command to succeed even if the virtual environment already exists.
+// The `mounts` section binds the local `.gitconfig` to the container, allowing Git configuration to persist.
+// The `remoteUser` is set to `vscode` to match the user in the dev container image.
+// The `features` section includes Git, common utilities, and pipx for Python package management.
+// The `customizations` section configures VS Code settings and extensions for Python development.
+// The `image` can be changed to a Debian-based variant if preferred such as `mcr.microsoft.com/devcontainers/python:3.12-bullseye`.
+// The `postCreateCommand` is run after the container is created, setting up the environment for Python development.
