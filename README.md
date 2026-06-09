@@ -79,6 +79,12 @@ authentication, sitemap index files / pagination, or dynamic sitemaps, and may
 not handle every sitemap or page format. Treat the sitemap and the pages it
 references as untrusted input and run it against sources you trust.
 
+Some sites sit behind bot-protection that serves a JavaScript "verify your
+device" challenge instead of the real content. sitemap2atom sends browser-like
+headers, which is enough for many of these, but sites that require JavaScript
+execution cannot be fetched by a simple HTTP client. In that case you'll see a
+clear error explaining that an HTML page was returned instead of a sitemap.
+
 ## Development
 
 This project uses [uv](https://docs.astral.sh/uv/).

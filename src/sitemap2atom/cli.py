@@ -9,6 +9,7 @@ import requests
 from . import __version__
 from .core import (
     DEFAULT_FEED_TITLE,
+    SitemapError,
     enrich_url_list_to_atom,
     feed_to_pretty_xml,
     fetch_sitemap_urls,
@@ -61,6 +62,8 @@ def main(sitemap_url, output, limit, feed_title, timeout, verbose):
         urls = fetch_sitemap_urls(sitemap_url, timeout=timeout)
     except requests.RequestException as e:
         raise click.ClickException(f"Failed to fetch sitemap {sitemap_url}: {e}")
+    except SitemapError as e:
+        raise click.ClickException(str(e))
 
     if limit is not None:
         urls = urls[:limit]

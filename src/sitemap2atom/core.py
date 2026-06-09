@@ -18,14 +18,27 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
-# A browser-like User-Agent; some sites reject the default requests UA.
+# A current browser-like User-Agent. Some sites (and bot-protection layers)
+# serve a JavaScript "verify your device" challenge instead of the real
+# content when the User-Agent looks old or the Accept header is missing, so
+# we present a recent Chrome and the headers a real browser would send.
 USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
+
+DEFAULT_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 ATOM_NS = "http://www.w3.org/2005/Atom"
 DEFAULT_FEED_TITLE = "Enriched URL Feed"
+
+
+class SitemapError(Exception):
+    """Raised when a fetched URL is not a usable XML sitemap."""
 
 
 def parse_metadata(html, url):
@@ -120,9 +133,7 @@ def extract_metadata(url, timeout=10):
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
 
-        response = requests.get(
-            url, headers={"User-Agent": USER_AGENT}, timeout=timeout
-        )
+        response = requests.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
         response.raise_for_status()
 
         return parse_metadata(response.content, url)
@@ -293,6 +304,42 @@ def enrich_url_list_to_atom(urls, feed_title=DEFAULT_FEED_TITLE, timeout=10):
     return feed
 
 
+def _looks_like_html(content, content_type=""):
+    """Heuristic: did we get an HTML page where a sitemap was expected?"""
+    if "html" in content_type.lower():
+        return True
+    raw = content if isinstance(content, bytes) else content.encode("utf-8")
+    start = raw.lstrip()[:256].lower()
+    return start.startswith(b"<!doctype html") or start.startswith(b"<html")
+
+
+def parse_sitemap(content, content_type=""):
+    """Parse sitemap XML and return the list of ``<loc>`` URLs it contains.
+
+    Args:
+        content (str | bytes): The raw sitemap body.
+        content_type (str): The response ``Content-Type`` header, if known.
+
+    Returns:
+        list[str]: The URLs found in the sitemap (possibly empty).
+
+    Raises:
+        SitemapError: If no ``<loc>`` elements are found and the body looks
+            like an HTML page rather than XML — typically a bot-protection
+            "verify your device" challenge or an incorrect URL.
+    """
+    soup = BeautifulSoup(content, "xml")
+    urls = [loc.text for loc in soup.find_all("loc")]
+    if not urls and _looks_like_html(content, content_type):
+        raise SitemapError(
+            "Expected an XML sitemap but received an HTML page"
+            + (f" (Content-Type: {content_type})" if content_type else "")
+            + ". The site may be blocking automated requests, or the URL may "
+            "not point to a sitemap."
+        )
+    return urls
+
+
 def fetch_sitemap_urls(sitemap_url, timeout=10):
     """Fetch a sitemap and return the list of ``<loc>`` URLs it contains.
 
@@ -302,14 +349,14 @@ def fetch_sitemap_urls(sitemap_url, timeout=10):
 
     Returns:
         list[str]: The URLs found in the sitemap.
+
+    Raises:
+        SitemapError: If the response is an HTML page rather than a sitemap.
     """
     logger.info("Fetching sitemap: %s", sitemap_url)
-    response = requests.get(
-        sitemap_url, timeout=timeout, headers={"User-Agent": USER_AGENT}
-    )
+    response = requests.get(sitemap_url, timeout=timeout, headers=DEFAULT_HEADERS)
     response.raise_for_status()
-    soup = BeautifulSoup(response.content, "xml")
-    urls = [loc.text for loc in soup.find_all("loc")]
+    urls = parse_sitemap(response.content, response.headers.get("content-type", ""))
     logger.info("Found %d URLs in the sitemap.", len(urls))
     return urls
 

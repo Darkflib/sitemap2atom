@@ -5,9 +5,11 @@ from pathlib import Path
 import pytest
 
 from sitemap2atom.core import (
+    SitemapError,
     enrich_atom_entry,
     enrich_url_list_to_atom,
     parse_metadata,
+    parse_sitemap,
 )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample.html"
@@ -124,3 +126,34 @@ def test_enrich_url_list_to_atom_empty_feed_is_valid():
     assert len(self_links) == 1
     # No URLs were supplied, so there should be no entries.
     assert feed.findall("entry") == []
+
+
+SITEMAP_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://example.com/a</loc></url>
+  <url><loc>https://example.com/b</loc></url>
+</urlset>"""
+
+
+def test_parse_sitemap_extracts_loc_urls():
+    urls = parse_sitemap(SITEMAP_XML, "application/xml")
+    assert urls == ["https://example.com/a", "https://example.com/b"]
+
+
+def test_parse_sitemap_empty_urlset_returns_empty_list():
+    # A valid but empty sitemap is not an error.
+    empty = b'<?xml version="1.0"?><urlset xmlns="x"></urlset>'
+    assert parse_sitemap(empty, "application/xml") == []
+
+
+def test_parse_sitemap_raises_on_html_bot_wall():
+    # A "verify your device" interstitial: HTML, no <loc>.
+    html = b"<!DOCTYPE html><html><head><title>Verifying Device</title></head></html>"
+    with pytest.raises(SitemapError):
+        parse_sitemap(html, "text/html; charset=UTF-8")
+
+
+def test_parse_sitemap_detects_html_by_body_when_content_type_missing():
+    html = b"   <html><body>blocked</body></html>"
+    with pytest.raises(SitemapError):
+        parse_sitemap(html, "")

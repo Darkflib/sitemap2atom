@@ -1,6 +1,6 @@
 [project]
 name = "sitemap2atom"
-version = "0.1.0"
+version = "0.1.1"
 description = "A tool to convert XML sitemaps to Atom feeds"
 authors = [{name = "Mike Preston", email = "darkflib@gmail.com"}]
 license = "MIT"
