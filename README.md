@@ -1,31 +1,102 @@
 # sitemap2atom
 
-A simple tool to convert a sitemap.xml file into an Atom feed - especially useful for sites that don't have a CMS or where the CMS doesn't support Atom feeds.
+A simple tool to convert an XML sitemap into an [Atom](https://datatracker.ietf.org/doc/html/rfc4287)
+feed — especially useful for sites that don't have a CMS, or where the CMS
+doesn't produce a feed. Each URL in the sitemap is fetched and its OpenGraph and
+Twitter Card metadata (title, description, image, author, dates) is used to build
+a rich Atom entry.
 
-## Example
+## Installation
 
-https://gist.github.com/Darkflib/989b8f3a5a1ea995e8e294669d5e282a
+### Run without installing (uvx)
+
+Once published to PyPI you can run it directly with
+[uv](https://docs.astral.sh/uv/):
+
+```bash
+uvx sitemap2atom https://example.com/sitemap.xml -o feed.atom
+```
+
+To run the latest code straight from GitHub (before a release, or to try `main`):
+
+```bash
+uvx --from git+https://github.com/darkflib/sitemap2atom sitemap2atom https://example.com/sitemap.xml
+```
+
+### Install as a tool / library
+
+```bash
+uv tool install sitemap2atom      # installs the `sitemap2atom` command
+# or
+pip install sitemap2atom
+```
 
 ## Usage
 
-1. Install the required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+sitemap2atom SITEMAP_URL [OPTIONS]
+```
 
-2. Run the script:
-   ```bash
-   python test.py
-   ```
-3. The script will generate an `enriched_sitemap.xml` file in the same directory.
+By default the feed is written to standard output; redirect it or use `-o` to
+save it to a file:
 
-Configure the `sitemap_url` variable in `test.py` to point to your sitemap.xml file.
+```bash
+# Print to stdout
+sitemap2atom https://example.com/sitemap.xml
 
-This is a simple script and may not handle all edge cases. It is designed for basic use cases where you have a sitemap.xml file and want to convert it to an Atom feed.
-It does not support advanced features like authentication, pagination, or dynamic sitemaps, and may not work with all sitemap formats.
+# Write to a file, limiting to the first 20 URLs
+sitemap2atom https://example.com/sitemap.xml -o feed.atom --limit 20
+```
+
+### Options
+
+- `-o, --output PATH` — write the Atom feed to this file (default: stdout).
+- `--limit N` — maximum number of sitemap URLs to process (default: all).
+- `--feed-title TEXT` — title for the generated feed (default: `Enriched URL Feed`).
+- `--timeout SECONDS` — per-request timeout in seconds (default: `10`).
+- `-v, --verbose` — enable info-level logging on stderr.
+- `--version` — show the version and exit.
+
+### As a library
+
+```python
+from sitemap2atom import fetch_sitemap_urls, enrich_url_list_to_atom, feed_to_pretty_xml
+
+urls = fetch_sitemap_urls("https://example.com/sitemap.xml")
+feed = enrich_url_list_to_atom(urls[:10], feed_title="My Feed")
+print(feed_to_pretty_xml(feed))
+```
+
+## Example output
+
+See this gist for a sample of the kind of enriched Atom feed produced:
+<https://gist.github.com/Darkflib/989b8f3a5a1ea995e8e294669d5e282a>
+
+## Limitations
+
+This is a simple tool aimed at basic use cases. It does not support
+authentication, sitemap index files / pagination, or dynamic sitemaps, and may
+not handle every sitemap or page format. Treat the sitemap and the pages it
+references as untrusted input and run it against sources you trust.
+
+## Development
+
+This project uses [uv](https://docs.astral.sh/uv/).
+
+```bash
+git clone https://github.com/darkflib/sitemap2atom.git
+cd sitemap2atom
+uv sync
+uv run pytest
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more, and
+[CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file
+for details.
 
-PS. If you do anything interesting with this code, please let me know! I'd love to hear about it.
+PS. If you do anything interesting with this code, please let me know! I'd love
+to hear about it.
