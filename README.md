@@ -99,6 +99,19 @@ uv run pytest
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more, and
 [CHANGELOG.md](CHANGELOG.md) for release notes.
 
+## Use Cases
+
+**Editorial pipelines:** Sites without native feeds (static sites, marketing
+pages) can now be consumed as structured feeds, ready for newsletter aggregation
+or content curation workflows.
+
+**Agent pipelines:** LLM agents and agentic systems need structured, on-demand
+inputs. sitemap2atom turns any public web site into machine-readable content
+without requiring API keys or custom integrations.
+
+This tool is maintained by [Mike Preston](https://github.com/Darkflib), who
+consults on agentic infrastructure at [wwff.tech](https://wwff.tech).
+
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file
